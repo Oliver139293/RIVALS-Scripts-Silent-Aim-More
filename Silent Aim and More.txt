@@ -1,0 +1,329 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+
+local bodyVelocity
+local targetPlayer = nil
+
+local ClickInterval = 0.10
+local isLeftMouseDown = false
+local autoClickConnection = nil
+
+-- ESP settings
+local FILL_COLOR = Color3.fromRGB(255, 0, 0)
+local OUTLINE_COLOR = Color3.fromRGB(255, 255, 255)
+local FILL_TRANSPARENCY = 0.5
+local OUTLINE_TRANSPARENCY = 0
+
+-- Toggles
+local scriptEnabled = false
+local autoShootEnabled = false
+local flying = false
+local espenabled = false
+
+-- Config
+local FLY_SPEED = 100
+
+-- Update character if you respawn
+localPlayer.CharacterAdded:Connect(function(char)
+	character = char
+	humanoid = char:WaitForChild("Humanoid")
+	rootPart = char:WaitForChild("HumanoidRootPart")
+end)
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "StatusGui"
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.ZIndex = 10
+statusLabel.BackgroundTransparency = 1
+statusLabel.Size = UDim2.new(0, 220, 0, 50)
+statusLabel.Position = UDim2.new(0, 10, 0, 10)
+statusLabel.BorderSizePixel = 0
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
+statusLabel.TextStrokeTransparency = 0
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.TextSize = 16
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.TextYAlignment = Enum.TextYAlignment.Top
+statusLabel.Parent = screenGui
+
+local function updateStatus()
+	statusLabel.Text =
+		"Silent Aim (X): " .. (scriptEnabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
+		"Auto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
+		"Fly (Q): " .. (flying and "🟢 ON" or "🔴 OFF") .. "\n" ..
+		"ESP (B): " .. (espenabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
+		"(Toggle SA Before AS)"
+end
+
+updateStatus()
+
+-- FUNCTIONS
+local function isLobbyVisible()
+	return localPlayer.PlayerGui.MainGui.MainFrame.Lobby.Currency.Visible == true
+end
+
+local function getClosestPlayerToMouse()
+	local closestPlayer = nil
+	local shortestDistance = math.huge
+	local mousePosition = UserInputService:GetMouseLocation()
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+			local head = player.Character.Head
+			local headPosition, onScreen = camera:WorldToViewportPoint(head.Position)
+
+			if onScreen then
+				local screenPosition = Vector2.new(headPosition.X, headPosition.Y)
+				local distance = (screenPosition - mousePosition).Magnitude
+
+				if distance < shortestDistance then
+					closestPlayer = player
+					shortestDistance = distance
+				end
+			end
+		end
+	end
+
+	return closestPlayer
+end
+
+local function lockCameraToHead()
+	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+		local head = targetPlayer.Character.Head
+		camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+	end
+end
+
+local function clearHighlights()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Character then
+			local highlight = player.Character:FindFirstChild("PlayerHighlight")
+			if highlight then
+				highlight:Destroy()
+			end
+		end
+	end
+end
+
+local function addHighlight(character)
+	if not character then return end
+	if character:FindFirstChild("PlayerHighlight") then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "PlayerHighlight"
+	highlight.FillColor = FILL_COLOR
+	highlight.OutlineColor = OUTLINE_COLOR
+	highlight.FillTransparency = FILL_TRANSPARENCY
+	highlight.OutlineTransparency = OUTLINE_TRANSPARENCY
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Parent = character
+end
+
+local function rebuildHighlights()
+	clearHighlights()
+	if not espenabled then return end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= localPlayer and player.Character then
+			addHighlight(player.Character)
+		end
+	end
+end
+
+-- AUTO CLICK LOOP
+local function autoClick()
+	if autoClickConnection then
+		autoClickConnection:Disconnect()
+	end
+
+	autoClickConnection = RunService.Heartbeat:Connect(function()
+		if not scriptEnabled then
+			autoClickConnection:Disconnect()
+			autoClickConnection = nil
+			return
+		end
+
+		if isLeftMouseDown or autoShootEnabled then
+			if not isLobbyVisible() then
+				mouse1click()
+			end
+		else
+			autoClickConnection:Disconnect()
+			autoClickConnection = nil
+		end
+	end)
+end
+
+-- FLY FUNCTIONS
+local function startFlying()
+	if flying then return end
+
+	flying = true
+
+	bodyVelocity = Instance.new("BodyVelocity")
+	bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	bodyVelocity.Velocity = Vector3.zero
+	bodyVelocity.Parent = rootPart
+
+	humanoid.PlatformStand = false
+
+	RunService:BindToRenderStep("FlyMovement", Enum.RenderPriority.Character.Value + 1, function()
+		if not flying then return end
+
+		local moveDirection = Vector3.zero
+
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+			moveDirection += camera.CFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+			moveDirection -= camera.CFrame.LookVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+			moveDirection -= camera.CFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+			moveDirection += camera.CFrame.RightVector
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+			moveDirection += Vector3.new(0, 1, 0)
+		end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+			moveDirection -= Vector3.new(0, 1, 0)
+		end
+
+		if moveDirection.Magnitude > 0 then
+			bodyVelocity.Velocity = moveDirection.Unit * FLY_SPEED
+		else
+			bodyVelocity.Velocity = Vector3.zero
+		end
+	end)
+end
+
+local function stopFlying()
+	if not flying then return end
+
+	flying = false
+	RunService:UnbindFromRenderStep("FlyMovement")
+
+	if bodyVelocity then
+		bodyVelocity:Destroy()
+		bodyVelocity = nil
+	end
+end
+
+-- Handle new characters
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		if espenabled then
+			task.wait(0.1)
+			addHighlight(character)
+		end
+	end)
+end)
+
+-- Existing players
+for _, player in ipairs(Players:GetPlayers()) do
+	if player ~= localPlayer then
+		player.CharacterAdded:Connect(function(character)
+			if espenabled then
+				task.wait(0.1)
+				addHighlight(character)
+			end
+		end)
+	end
+end
+
+-- INPUT
+UserInputService.InputBegan:Connect(function(input, isProcessed)
+	if isProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.X then
+		scriptEnabled = not scriptEnabled
+
+		if not scriptEnabled then
+			targetPlayer = nil
+			isLeftMouseDown = false
+			autoShootEnabled = false
+
+			if autoClickConnection then
+				autoClickConnection:Disconnect()
+				autoClickConnection = nil
+			end
+		end
+
+		updateStatus()
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.E then
+		if not scriptEnabled then return end
+
+		autoShootEnabled = not autoShootEnabled
+
+		if autoShootEnabled and not autoClickConnection then
+			autoClick()
+		end
+
+		updateStatus()
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.Q then
+		if flying then
+			stopFlying()
+		else
+			startFlying()
+		end
+		updateStatus()
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.B then
+		espenabled = not espenabled
+		rebuildHighlights()
+		updateStatus()
+	end
+
+	if not scriptEnabled then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if not isLeftMouseDown then
+			isLeftMouseDown = true
+			autoClick()
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, isProcessed)
+	if isProcessed then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		isLeftMouseDown = false
+	end
+end)
+
+-- MAIN LOOP
+RunService.Heartbeat:Connect(function()
+	if not scriptEnabled then return end
+
+	if not isLobbyVisible() then
+		targetPlayer = getClosestPlayerToMouse()
+
+		if targetPlayer then
+			lockCameraToHead()
+		end
+	end
+end)
