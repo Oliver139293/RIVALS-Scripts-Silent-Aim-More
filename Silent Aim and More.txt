@@ -1,3 +1,5 @@
+-- Y-JI Hub (Rivals)
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,16 +23,25 @@ local OUTLINE_COLOR = Color3.fromRGB(255, 255, 255)
 local FILL_TRANSPARENCY = 0.5
 local OUTLINE_TRANSPARENCY = 0
 
+-- AIM settings
+getgenv().Aimbot = true
+getgenv().Smoothness = 0.2
+
+local AimbotEnabled = false
+
+-- SPEED settings
+_G.EnableSpeed = false
+_G.SpeedPower = 4
+
 -- Toggles
 local scriptEnabled = false
 local autoShootEnabled = false
 local flying = false
 local espenabled = false
 
--- Config
 local FLY_SPEED = 100
 
--- Update character if you respawn
+-- Update character when respawning
 localPlayer.CharacterAdded:Connect(function(char)
 	character = char
 	humanoid = char:WaitForChild("Humanoid")
@@ -47,8 +58,11 @@ screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
 local statusLabel = Instance.new("TextLabel")
 statusLabel.ZIndex = 10
-statusLabel.BackgroundTransparency = 1
-statusLabel.Size = UDim2.new(0, 220, 0, 50)
+statusLabel.BackgroundTransparency = 0
+statusLabel.Active = true
+statusLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- background colour
+statusLabel.Size = UDim2.new(0, 0, 0, 0)
+statusLabel.AutomaticSize = Enum.AutomaticSize.XY
 statusLabel.Position = UDim2.new(0, 10, 0, 10)
 statusLabel.BorderSizePixel = 0
 statusLabel.TextColor3 = Color3.new(1, 1, 1)
@@ -59,20 +73,86 @@ statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 statusLabel.Parent = screenGui
 
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 5)
+corner.Parent = statusLabel
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Thickness = 2
+stroke.Transparency = 0.3
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Parent = statusLabel
+
+local padding = Instance.new("UIPadding")
+padding.PaddingLeft = UDim.new(0, 7)
+padding.PaddingRight = UDim.new(0, 7)
+padding.PaddingTop = UDim.new(0, 7)
+padding.PaddingBottom = UDim.new(0, 7)
+padding.Parent = statusLabel
+
+local TweenService = game:GetService("TweenService")
+
+local normalSize = statusLabel.Size
+local hoverSize = UDim2.new(
+	normalSize.X.Scale,
+	normalSize.X.Offset + 10,
+	normalSize.Y.Scale,
+	normalSize.Y.Offset + 5
+)
+
+statusLabel.MouseEnter:Connect(function()
+	TweenService:Create(
+		statusLabel,
+		TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{
+			BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+			Size = hoverSize
+		}
+	):Play()
+end)
+
+statusLabel.MouseLeave:Connect(function()
+	TweenService:Create(
+		statusLabel,
+		TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{
+			BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+			Size = normalSize
+		}
+	):Play()
+end)
+
 local function updateStatus()
+	statusLabel.RichText = true
+
 	statusLabel.Text =
-		"Silent Aim (X): " .. (scriptEnabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
-		"Auto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
-		"Fly (Q): " .. (flying and "🟢 ON" or "🔴 OFF") .. "\n" ..
-		"ESP (B): " .. (espenabled and "🟢 ON" or "🔴 OFF") .. "\n" ..
-		"(Toggle SA Before AS)"
+		"<font color='rgb(104, 95, 233)'>Y-JI Hub | Rivals</font>"
+		.. "\n"
+		.. "\nSilent Aim (X): " .. (scriptEnabled and "🟢 ON" or "🔴 OFF")
+		.. "\nAimlock (Z): " .. (AimbotEnabled and "🟢 ON" or "🔴 OFF")
+		.. "\nAuto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF")
+		.. "\nFly (Q): " .. (flying and "🟢 ON" or "🔴 OFF")
+		.. "\nWalkSpeed (H): " .. (_G.EnableSpeed and "🟢 ON" or "🔴 OFF")
+		.. "\nESP (B): " .. (espenabled and "🟢 ON" or "🔴 OFF")
+		.. "\n<font color='rgb(255,0,0)'>(Toggle Silent Aim before"
+		.. "\ntoggling Auto Shoot ⚠️)</font>"
 end
 
 updateStatus()
 
--- FUNCTIONS
 local function isLobbyVisible()
-	return localPlayer.PlayerGui.MainGui.MainFrame.Lobby.Currency.Visible == true
+	local gui = localPlayer.PlayerGui:FindFirstChild("MainGui")
+
+	if gui and gui:FindFirstChild("MainFrame") then
+		local lobby = gui.MainFrame:FindFirstChild("Lobby")
+
+		if lobby and lobby:FindFirstChild("Currency") then
+			return lobby.Currency.Visible
+		end
+	end
+
+	return false
 end
 
 local function getClosestPlayerToMouse()
@@ -107,10 +187,94 @@ local function lockCameraToHead()
 	end
 end
 
+local function get_target()
+	local target = nil
+	local closestDistance = 2000
+	local myCharacter = localPlayer.Character
+
+	if not myCharacter then
+		return nil
+	end
+
+	local myRoot = myCharacter:FindFirstChild("HumanoidRootPart")
+
+	if not myRoot then
+		return nil
+	end
+
+	for _, v in ipairs(Players:GetPlayers()) do
+		if v ~= localPlayer and v.Character then
+			local humanoid = v.Character:FindFirstChild("Humanoid")
+			local root = v.Character:FindFirstChild("HumanoidRootPart")
+
+			if humanoid and humanoid.Health > 0 and root then
+				local distance = (root.Position - myRoot.Position).Magnitude
+
+				if distance < closestDistance then
+					local part = v.Character:FindFirstChild("HeadHB")
+						or v.Character:FindFirstChild("Head")
+						or v.Character:FindFirstChild("UpperTorso")
+
+					if part then
+						closestDistance = distance
+						target = part
+					end
+				end
+			end
+		end
+	end
+
+	return target
+end
+
+-- Aimlock
+RunService.RenderStepped:Connect(function()
+	if AimbotEnabled and getgenv().Aimbot then
+		local target = get_target()
+
+		if target and target.Parent then
+			local pos, onScreen = camera:WorldToViewportPoint(target.Position)
+
+			if onScreen then
+				local mouse = UserInputService:GetMouseLocation()
+
+				local x = (pos.X - mouse.X) * getgenv().Smoothness
+				local y = (pos.Y - mouse.Y) * getgenv().Smoothness
+
+				if mousemoverel then
+					mousemoverel(x, y)
+				end
+			end
+		end
+	end
+end)
+
+-- Speed
+RunService.RenderStepped:Connect(function()
+	if not _G.EnableSpeed then
+		return
+	end
+
+	local char = localPlayer.Character
+
+	if not char then
+		return
+	end
+
+	local hum = char:FindFirstChild("Humanoid")
+	local root = char:FindFirstChild("HumanoidRootPart")
+
+	if hum and root and hum.MoveDirection.Magnitude > 0 then
+		root.CFrame += hum.MoveDirection * (_G.SpeedPower / 10)
+	end
+end)
+
+-- ESP
 local function clearHighlights()
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player.Character then
 			local highlight = player.Character:FindFirstChild("PlayerHighlight")
+
 			if highlight then
 				highlight:Destroy()
 			end
@@ -119,8 +283,13 @@ local function clearHighlights()
 end
 
 local function addHighlight(character)
-	if not character then return end
-	if character:FindFirstChild("PlayerHighlight") then return end
+	if not character then
+		return
+	end
+
+	if character:FindFirstChild("PlayerHighlight") then
+		return
+	end
 
 	local highlight = Instance.new("Highlight")
 	highlight.Name = "PlayerHighlight"
@@ -134,7 +303,10 @@ end
 
 local function rebuildHighlights()
 	clearHighlights()
-	if not espenabled then return end
+
+	if not espenabled then
+		return
+	end
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= localPlayer and player.Character then
@@ -144,6 +316,7 @@ local function rebuildHighlights()
 end
 
 -- AUTO CLICK LOOP
+
 local function autoClick()
 	if autoClickConnection then
 		autoClickConnection:Disconnect()
@@ -168,8 +341,11 @@ local function autoClick()
 end
 
 -- FLY FUNCTIONS
+
 local function startFlying()
-	if flying then return end
+	if flying then
+		return
+	end
 
 	flying = true
 
@@ -180,42 +356,56 @@ local function startFlying()
 
 	humanoid.PlatformStand = false
 
-	RunService:BindToRenderStep("FlyMovement", Enum.RenderPriority.Character.Value + 1, function()
-		if not flying then return end
+	RunService:BindToRenderStep(
+		"FlyMovement",
+		Enum.RenderPriority.Character.Value + 1,
+		function()
+			if not flying then
+				return
+			end
 
-		local moveDirection = Vector3.zero
+			local moveDirection = Vector3.zero
 
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-			moveDirection += camera.CFrame.LookVector
-		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-			moveDirection -= camera.CFrame.LookVector
-		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-			moveDirection -= camera.CFrame.RightVector
-		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-			moveDirection += camera.CFrame.RightVector
-		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-			moveDirection += Vector3.new(0, 1, 0)
-		end
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-			moveDirection -= Vector3.new(0, 1, 0)
-		end
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+				moveDirection += camera.CFrame.LookVector
+			end
 
-		if moveDirection.Magnitude > 0 then
-			bodyVelocity.Velocity = moveDirection.Unit * FLY_SPEED
-		else
-			bodyVelocity.Velocity = Vector3.zero
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+				moveDirection -= camera.CFrame.LookVector
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+				moveDirection -= camera.CFrame.RightVector
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+				moveDirection += camera.CFrame.RightVector
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+				moveDirection += Vector3.new(0, 1, 0)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+				moveDirection -= Vector3.new(0, 1, 0)
+			end
+
+			if moveDirection.Magnitude > 0 then
+				bodyVelocity.Velocity = moveDirection.Unit * FLY_SPEED
+			else
+				bodyVelocity.Velocity = Vector3.zero
+			end
 		end
-	end)
+	)
 end
 
 local function stopFlying()
-	if not flying then return end
+	if not flying then
+		return
+	end
 
 	flying = false
+
 	RunService:UnbindFromRenderStep("FlyMovement")
 
 	if bodyVelocity then
@@ -224,7 +414,8 @@ local function stopFlying()
 	end
 end
 
--- Handle new characters
+-- Player connections
+
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
 		if espenabled then
@@ -234,7 +425,6 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
--- Existing players
 for _, player in ipairs(Players:GetPlayers()) do
 	if player ~= localPlayer then
 		player.CharacterAdded:Connect(function(character)
@@ -247,8 +437,11 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 
 -- INPUT
+
 UserInputService.InputBegan:Connect(function(input, isProcessed)
-	if isProcessed then return end
+	if isProcessed then
+		return
+	end
 
 	if input.KeyCode == Enum.KeyCode.X then
 		scriptEnabled = not scriptEnabled
@@ -268,8 +461,16 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		return
 	end
 
+	if input.KeyCode == Enum.KeyCode.Z then
+		AimbotEnabled = not AimbotEnabled
+		updateStatus()
+		return
+	end
+
 	if input.KeyCode == Enum.KeyCode.E then
-		if not scriptEnabled then return end
+		if not scriptEnabled then
+			return
+		end
 
 		autoShootEnabled = not autoShootEnabled
 
@@ -287,6 +488,13 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		else
 			startFlying()
 		end
+
+		updateStatus()
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.H then
+		_G.EnableSpeed = not _G.EnableSpeed
 		updateStatus()
 		return
 	end
@@ -295,9 +503,12 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		espenabled = not espenabled
 		rebuildHighlights()
 		updateStatus()
+		return
 	end
 
-	if not scriptEnabled then return end
+	if not scriptEnabled then
+		return
+	end
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		if not isLeftMouseDown then
@@ -308,7 +519,9 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 end)
 
 UserInputService.InputEnded:Connect(function(input, isProcessed)
-	if isProcessed then return end
+	if isProcessed then
+		return
+	end
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		isLeftMouseDown = false
@@ -316,8 +529,11 @@ UserInputService.InputEnded:Connect(function(input, isProcessed)
 end)
 
 -- MAIN LOOP
+
 RunService.Heartbeat:Connect(function()
-	if not scriptEnabled then return end
+	if not scriptEnabled then
+		return
+	end
 
 	if not isLobbyVisible() then
 		targetPlayer = getClosestPlayerToMouse()
