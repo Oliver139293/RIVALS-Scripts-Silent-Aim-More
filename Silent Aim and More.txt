@@ -25,7 +25,7 @@ local OUTLINE_TRANSPARENCY = 0
 
 -- AIM settings
 getgenv().Aimbot = true
-getgenv().Smoothness = 0.2
+getgenv().Smoothness = 0.4
 
 local AimbotEnabled = false
 
@@ -128,7 +128,6 @@ local function updateStatus()
 
 	statusLabel.Text =
 		"<font color='rgb(104, 95, 233)'>Y-JI Hub | Rivals</font>"
-		.. "\n"
 		.. "\nSilent Aim (X): " .. (scriptEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nAimlock (Z): " .. (AimbotEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nAuto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF")
