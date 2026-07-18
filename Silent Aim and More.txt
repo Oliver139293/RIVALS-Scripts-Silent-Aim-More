@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local localPlayer = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -37,6 +38,7 @@ _G.SpeedPower = 4
 local scriptEnabled = false
 local autoShootEnabled = false
 local flying = false
+local TP
 local espenabled = false
 
 local FLY_SPEED = 100
@@ -132,6 +134,7 @@ local function updateStatus()
 		.. "\nAimlock (Z): " .. (AimbotEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nAuto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nFly (Q): " .. (flying and "🟢 ON" or "🔴 OFF")
+		.. "\nTP + Auto (T): " .. (TP and "🟢 ON" or "🔴 OFF")
 		.. "\nWalkSpeed (H): " .. (_G.EnableSpeed and "🟢 ON" or "🔴 OFF")
 		.. "\nESP (B): " .. (espenabled and "🟢 ON" or "🔴 OFF")
 		.. "\n<font color='rgb(255,0,0)'>(Toggle Silent Aim before"
@@ -339,6 +342,62 @@ local function autoClick()
 	end)
 end
 
+local function DoSilentKill()
+	pcall(function()
+		local target = nil
+		local distMin = math.huge
+
+		for _, v in pairs(Players:GetPlayers()) do
+			if v ~= localPlayer 
+			and v.Character 
+			and v.Character:FindFirstChild("HumanoidRootPart") then
+				
+				local d = (v.Character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
+
+				if d < distMin then
+					distMin = d
+					target = v
+				end
+			end
+		end
+
+		if target and localPlayer.Character then
+			local character = localPlayer.Character
+			local hrp = character:FindFirstChild("HumanoidRootPart")
+
+			if hrp then
+				local oldPosition = hrp.CFrame
+
+				local targetHRP = target.Character.HumanoidRootPart
+				local tpPos = targetHRP.CFrame * CFrame.new(0, 6, 0)
+
+				character:PivotTo(tpPos)
+
+				camera.CFrame = CFrame.new(
+					camera.CFrame.Position,
+					target.Character.Head.Position
+				)
+
+				task.wait(0.05)
+
+				VirtualInputManager:SendMouseButtonEvent(
+					0,0,0,true,game,0
+				)
+
+				task.wait(0.02)
+
+				VirtualInputManager:SendMouseButtonEvent(
+					0,0,0,false,game,0
+				)
+
+				task.wait(0.02)
+
+				character:PivotTo(oldPosition)
+			end
+		end
+	end)
+end
+
 -- FLY FUNCTIONS
 
 local function startFlying()
@@ -492,6 +551,16 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		return
 	end
 
+    if input.KeyCode == Enum.KeyCode.T then
+		DoSilentKill()
+		TP = true
+		updateStatus()
+		task.wait(0.09)
+		TP = false
+		updateStatus()
+		return
+    end
+    
 	if input.KeyCode == Enum.KeyCode.H then
 		_G.EnableSpeed = not _G.EnableSpeed
 		updateStatus()
