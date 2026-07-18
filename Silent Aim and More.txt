@@ -1,4 +1,4 @@
--- Y-JI Hub (Rivals)
+-- Y-JI Hub | Rivals
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -39,6 +39,7 @@ local scriptEnabled = false
 local autoShootEnabled = false
 local flying = false
 local TP
+local noclipEnabled = false
 local espenabled = false
 
 local FLY_SPEED = 100
@@ -134,6 +135,7 @@ local function updateStatus()
 		.. "\nAimlock (Z): " .. (AimbotEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nAuto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nFly (Q): " .. (flying and "🟢 ON" or "🔴 OFF")
+		.. "\nNoclip (K): " .. (noclipEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nTP + Auto (T): " .. (TP and "🟢 ON" or "🔴 OFF")
 		.. "\nWalkSpeed (H): " .. (_G.EnableSpeed and "🟢 ON" or "🔴 OFF")
 		.. "\nESP (B): " .. (espenabled and "🟢 ON" or "🔴 OFF")
@@ -157,13 +159,16 @@ local function isLobbyVisible()
 	return false
 end
 
-local function getClosestPlayerToMouse()
+local function getClosestPlayerOnScreen()
 	local closestPlayer = nil
 	local shortestDistance = math.huge
 	local mousePosition = UserInputService:GetMouseLocation()
 
 	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") then
+		if player ~= localPlayer 
+		and player.Character 
+		and player.Character:FindFirstChild("Head") then
+			
 			local head = player.Character.Head
 			local headPosition, onScreen = camera:WorldToViewportPoint(head.Position)
 
@@ -174,6 +179,32 @@ local function getClosestPlayerToMouse()
 				if distance < shortestDistance then
 					closestPlayer = player
 					shortestDistance = distance
+				end
+			end
+		end
+	end
+
+	return closestPlayer
+end
+
+local function getClosestPlayerOffScreen()
+	local closestPlayer = nil
+	local shortestDistance = math.huge
+
+	local origin = rootPart.Position
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= localPlayer 
+		and player.Character then
+			
+			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+
+			if hrp then
+				local distance = (hrp.Position - origin).Magnitude
+
+				if distance < shortestDistance then
+					shortestDistance = distance
+					closestPlayer = player
 				end
 			end
 		end
@@ -271,6 +302,28 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
+-- NOCLIP FUNCTIONS
+
+local function setNoclip(enabled)
+	local char = localPlayer.Character
+
+	if not char then
+		return
+	end
+
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = not enabled
+		end
+	end
+end
+
+RunService.Stepped:Connect(function()
+	if noclipEnabled then
+		setNoclip(true)
+	end
+end)
+
 -- ESP
 local function clearHighlights()
 	for _, player in ipairs(Players:GetPlayers()) do
@@ -348,14 +401,17 @@ local function DoSilentKill()
 		local distMin = math.huge
 
 		for _, v in pairs(Players:GetPlayers()) do
-			if v ~= localPlayer 
-			and v.Character 
+			if v ~= localPlayer
+			and v.Character
 			and v.Character:FindFirstChild("HumanoidRootPart") then
 				
-				local d = (v.Character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
+				local distance = (
+					v.Character.HumanoidRootPart.Position 
+					- localPlayer.Character.HumanoidRootPart.Position
+				).Magnitude
 
-				if d < distMin then
-					distMin = d
+				if distance < distMin then
+					distMin = distance
 					target = v
 				end
 			end
@@ -369,14 +425,18 @@ local function DoSilentKill()
 				local oldPosition = hrp.CFrame
 
 				local targetHRP = target.Character.HumanoidRootPart
-				local tpPos = targetHRP.CFrame * CFrame.new(0, 6, 0)
+				local targetHead = target.Character:FindFirstChild("Head")
+
+				local tpPos = targetHRP.CFrame * CFrame.new(0, 0, 6)
 
 				character:PivotTo(tpPos)
 
-				camera.CFrame = CFrame.new(
-					camera.CFrame.Position,
-					target.Character.Head.Position
-				)
+				if targetHead then
+					camera.CFrame = CFrame.new(
+						camera.CFrame.Position,
+						targetHead.Position
+					)
+				end
 
 				task.wait(0.05)
 
@@ -551,6 +611,15 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		return
 	end
 
+	if input.KeyCode == Enum.KeyCode.K then
+		noclipEnabled = not noclipEnabled
+	
+		setNoclip(noclipEnabled)
+	
+		updateStatus()
+		return
+	end
+
     if input.KeyCode == Enum.KeyCode.T then
 		DoSilentKill()
 		TP = true
@@ -604,7 +673,7 @@ RunService.Heartbeat:Connect(function()
 	end
 
 	if not isLobbyVisible() then
-		targetPlayer = getClosestPlayerToMouse()
+		targetPlayer = getClosestPlayerOffScreen()
 
 		if targetPlayer then
 			lockCameraToHead()
