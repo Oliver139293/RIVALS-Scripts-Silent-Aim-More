@@ -29,6 +29,7 @@ getgenv().Aimbot = true
 getgenv().Smoothness = 0.4
 
 local AimbotEnabled = false
+local aiming = false
 
 -- SPEED settings
 _G.EnableSpeed = false
@@ -132,7 +133,7 @@ local function updateStatus()
 	statusLabel.Text =
 		"<font color='rgb(104, 95, 233)'>Y-JI Hub | Rivals</font>"
 		.. "\nSilent Aim (X): " .. (scriptEnabled and "🟢 ON" or "🔴 OFF")
-		.. "\nAimlock (Z): " .. (AimbotEnabled and "🟢 ON" or "🔴 OFF")
+		.. "\nAimlock (Z): " .. (AimbotEnabled and (aiming and "🟢 ON" or "🟡 READY") or "🔴 OFF")
 		.. "\nAuto Shoot (E): " .. (autoShootEnabled and "🟢 ON" or "🔴 OFF")
 		.. "\nFly (Q): " .. (flying and "🟢 ON" or "🔴 OFF")
 		.. "\nNoclip (K): " .. (noclipEnabled and "🟢 ON" or "🔴 OFF")
@@ -262,7 +263,7 @@ end
 
 -- Aimlock
 RunService.RenderStepped:Connect(function()
-	if AimbotEnabled and getgenv().Aimbot then
+	if AimbotEnabled and aiming and getgenv().Aimbot then
 		local target = get_target()
 
 		if target and target.Parent then
@@ -561,6 +562,15 @@ UserInputService.InputBegan:Connect(function(input, isProcessed)
 		return
 	end
 
+	-- Right click starts aimlock
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		if AimbotEnabled then
+			aiming = true
+            updateStatus()
+		end
+		return
+	end
+
 	if input.KeyCode == Enum.KeyCode.X then
 		scriptEnabled = not scriptEnabled
 
@@ -663,20 +673,10 @@ UserInputService.InputEnded:Connect(function(input, isProcessed)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		isLeftMouseDown = false
 	end
-end)
 
--- MAIN LOOP
-
-RunService.Heartbeat:Connect(function()
-	if not scriptEnabled then
-		return
-	end
-
-	if not isLobbyVisible() then
-		targetPlayer = getClosestPlayerOffScreen()
-
-		if targetPlayer then
-			lockCameraToHead()
-		end
-	end
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+	aiming = false
+    updateStatus()
+	return
+end
 end)
