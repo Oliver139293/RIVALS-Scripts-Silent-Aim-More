@@ -189,29 +189,29 @@ local function getClosestPlayerOnScreen()
 end
 
 local function getClosestPlayerOffScreen()
-	local closestPlayer = nil
-	local shortestDistance = math.huge
+    local closestPlayer = nillocal shortestDistance = math.huge
 
-	local origin = rootPart.Position
+    local origin = rootPart.Position
 
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= localPlayer 
-		and player.Character then
-			
-			local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+    for _, player in ipairs(Players:GetPlayers()) do
+	    if player ~= localPlayer 
+	    and player.Character then
+		
+		local hrp = player.Character:FindFirstChild("HumanoidRootPart")
 
-			if hrp then
-				local distance = (hrp.Position - origin).Magnitude
+		if hrp then
+			local distance = (hrp.Position - origin).Magnitude
 
-				if distance < shortestDistance then
-					shortestDistance = distance
-					closestPlayer = player
-				end
+			if distance < shortestDistance then
+				shortestDistance = distance
+				closestPlayer = player
 			end
 		end
 	end
+end
 
-	return closestPlayer
+return closestPlayer
+
 end
 
 local function lockCameraToHead()
@@ -677,4 +677,23 @@ UserInputService.InputEnded:Connect(function(input, isProcessed)
 	    aiming = false
         updateStatus()
     end
+end)
+
+-- MAIN LOOP
+
+RunService.Heartbeat:Connect(function()
+    if not scriptEnabled then 
+        return
+    end
+
+    local SilentAimMode = getClosestPlayerOffScreen() -- change to getClosestPlayerOnScreen() if u want to shoot people on screen
+
+    if not isLobbyVisible() then
+ 	    targetPlayer = SilentAimMode
+
+	    if targetPlayer then
+	 	    lockCameraToHead()
+	    end
+    end
+
 end)
