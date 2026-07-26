@@ -500,19 +500,28 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     local key = input.KeyCode.Name:upper()
 
     if key == FlyKey then
-        flying = not flying
-
-        if flying then
-            startFlying()
-        else
-            stopFlying()
-        end
+    	if flying then
+        	stopFlying()
+    	else
+        	startFlying()
+    	end
 
     elseif key == SpeedKey then
         speedEnabled = not speedEnabled
 
-    elseif key == NoclipKey then
-        noclipEnabled = not noclipEnabled
+	elseif key == NoclipKey then
+    	noclipEnabled = not noclipEnabled
+
+    	if not noclipEnabled then
+        	local character = player.Character
+        	if character then
+            	for _, part in ipairs(character:GetDescendants()) do
+                	if part:IsA("BasePart") then
+                    	part.CanCollide = true
+                	end
+            	end
+        	end
+    	end
 
     elseif key == AimbotKey then
         AimbotEnabled = not AimbotEnabled
@@ -525,7 +534,10 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     elseif key == ESPKey then
         espenabled = not espenabled
         rebuildHighlights()
-    end
+
+	elseif key == TPKey then
+    	DoSilentKill()
+	end
 end)
 
 UserInputService.InputBegan:Connect(function(input, isProcessed)
@@ -829,6 +841,17 @@ KeybindsTab:CreateInput({
 	Flag = "SilentAimKey",
 	Callback = function(Text)
 		SilentAimKey = Text:upper()
+	end,
+})
+
+KeybindsTab:CreateInput({
+	Name = "Silent Kill Key",
+	CurrentValue = TPKey,
+	PlaceholderText = "",
+	RemoveTextAfterFocusLost = false,
+	Flag = "TPKey",
+	Callback = function(Text)
+		TPKey = Text:upper()
 	end,
 })
 
