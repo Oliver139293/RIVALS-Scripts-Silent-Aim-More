@@ -797,7 +797,7 @@ KeybindsTab:CreateInput({
     end,
 })
 
-KeyBindsTab:CreateInput({
+KeybindsTab:CreateInput({
 	Name = "Noclip Key",
 	CurrentValue = NoclipKey,
 	PlaceholderText = "",
@@ -810,7 +810,7 @@ KeyBindsTab:CreateInput({
 
 local CombatKeybindsSection = KeybindsTab:CreateSection("Combat Keybinds")
 
-KeyBindsTab:CreateInput({
+KeybindsTab:CreateInput({
 	Name = "Aimbot Key",
 	CurrentValue = AimbotKey,
 	PlaceholderText = "",
@@ -821,7 +821,7 @@ KeyBindsTab:CreateInput({
 	end,
 })
 
-KeyBindsTab:CreateInput({
+KeybindsTab:CreateInput({
 	Name = "Silent Aim Key",
 	CurrentValue = SilentAimKey,
 	PlaceholderText = "",
@@ -834,7 +834,7 @@ KeyBindsTab:CreateInput({
 
 local VisualKeybindSection = KeybindsTab:CreateSection("Visuals Keybinds")
 
-KeyBindsTab:CreateInput({
+KeybindsTab:CreateInput({
 	Name = "ESP Key",
 	CurrentValue = ESPKey,
 	PlaceholderText = "",
