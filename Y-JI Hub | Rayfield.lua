@@ -10,6 +10,15 @@ local speedEnabled = false
 local speedPower = 4
 local noclipEnabled = false
 
+-- Keybinds
+local FlyKey = "Q"
+local SpeedKey = "H"
+local NoclipKey = "E"
+local AimbotKey = "Z"
+local SilentAimKey = "X"
+local ESPKey = "B"
+local TPKey = "T"
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -481,6 +490,44 @@ local function DoSilentKill()
 	end)
 end
 
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if input.UserInputType ~= Enum.UserInputType.Keyboard then
+        return
+    end
+
+    local key = input.KeyCode.Name:upper()
+
+    if key == FlyKey then
+        flying = not flying
+
+        if flying then
+            startFlying()
+        else
+            stopFlying()
+        end
+
+    elseif key == SpeedKey then
+        speedEnabled = not speedEnabled
+
+    elseif key == NoclipKey then
+        noclipEnabled = not noclipEnabled
+
+    elseif key == AimbotKey then
+        AimbotEnabled = not AimbotEnabled
+        _G.ShowFOV = AimbotEnabled
+
+    elseif key == SilentAimKey then
+        scriptEnabled = not scriptEnabled
+        _G.ShowFOV = scriptEnabled
+
+    elseif key == ESPKey then
+        espenabled = not espenabled
+        rebuildHighlights()
+    end
+end)
+
 UserInputService.InputBegan:Connect(function(input, isProcessed)
 	if isProcessed then
 		return
@@ -583,11 +630,13 @@ local MovementTab = Window:CreateTab("Movement", 4483362458)
 
 local FlySection = MovementTab:CreateSection("Fly")
 
-local Toggle = MovementTab:CreateToggle({
+MovementTab:CreateToggle({
     Name = "Fly",
     CurrentValue = false,
     Flag = "FlyToggle",
     Callback = function(Value)
+        flyEnabled = Value
+
         if Value then
             startFlying()
         else
@@ -719,5 +768,79 @@ VisualsTab:CreateToggle({
 	Flag = "EspToggle",
 	Callback = function(Value)
 		espenabled = Value
+	end,
+})
+
+local KeybindsTab = Window:CreateTab("Keybinds", 4483362458)
+
+local MovementKeybindsSections = KeybindsTab:CreateSection("Movement Keybinds")
+
+KeybindsTab:CreateInput({
+    Name = "Fly Key",
+    CurrentValue = FlyKey,
+    PlaceholderText = "",
+    RemoveTextAfterFocusLost = false,
+    Flag = "FlyKey",
+    Callback = function(Text)
+        FlyKey = Text:upper()
+    end,
+})
+
+KeybindsTab:CreateInput({
+    Name = "Speed Key",
+    CurrentValue = SpeedKey,
+    PlaceholderText = "",
+    RemoveTextAfterFocusLost = false,
+    Flag = "SpeedKey",
+    Callback = function(Text)
+        SpeedKey = Text:upper()
+    end,
+})
+
+KeyBindsTab:CreateInput({
+	Name = "Noclip Key",
+	CurrentValue = NoclipKey,
+	PlaceholderText = "",
+	RemoveTextAfterFocusLost = false,
+	Flag = "NoclipKey",
+	Callback = function(Text)
+		NoclipKey = Text:upper()
+	end,
+})
+
+local CombatKeybindsSection = KeybindsTab:CreateSection("Combat Keybinds")
+
+KeyBindsTab:CreateInput({
+	Name = "Aimbot Key",
+	CurrentValue = AimbotKey,
+	PlaceholderText = "",
+	RemoveTextAfterFocusLost = false,
+	Flag = "AimbotKey",
+	Callback = function(Text)
+		AimbotKey = Text:upper()
+	end,
+})
+
+KeyBindsTab:CreateInput({
+	Name = "Silent Aim Key",
+	CurrentValue = SilentAimKey,
+	PlaceholderText = "",
+	RemoveTextAfterFocusLost = false,
+	Flag = "SilentAimKey",
+	Callback = function(Text)
+		SilentAimKey = Text:upper()
+	end,
+})
+
+local VisualKeybindSection = KeybindsTab:CreateSection("Visuals Keybinds")
+
+KeyBindsTab:CreateInput({
+	Name = "ESP Key",
+	CurrentValue = ESPKey,
+	PlaceholderText = "",
+	RemoveTextAfterFocusLost = false,
+	Flag = "ESPKey",
+	Callback = function(Text)
+		ESPKey = Text:upper()
 	end,
 })
