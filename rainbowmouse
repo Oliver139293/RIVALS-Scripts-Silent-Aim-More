@@ -1,0 +1,98 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Hide Roblox mouse cursor
+UserInputService.MouseIconEnabled = false
+
+-- Remove old crosshair
+local old = playerGui:FindFirstChild("RainbowCrosshair")
+if old then
+	old:Destroy()
+end
+
+--------------------------------------------------
+-- SETTINGS
+--------------------------------------------------
+
+local spinSpeed = 180        -- Degrees per second
+local rainbowSpeed = 0.5     -- Colour changing speed
+
+local gap = 12               -- Gap in centre
+local lineLength = 15
+local lineThickness = 3
+
+--------------------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "RainbowCrosshair"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 999999
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.Parent = playerGui
+
+local pivot = Instance.new("Frame")
+pivot.Size = UDim2.fromOffset(40, 40)
+pivot.AnchorPoint = Vector2.new(0.5, 0.5)
+pivot.BackgroundTransparency = 1
+pivot.ZIndex = 999999
+pivot.Parent = gui
+
+local lines = {}
+
+local function createLine(rotation, position)
+	local line = Instance.new("Frame")
+	line.Size = UDim2.fromOffset(lineThickness, lineLength)
+	line.Position = position
+	line.AnchorPoint = Vector2.new(0.5, 0.5)
+	line.Rotation = rotation
+	line.BorderSizePixel = 0
+	line.BackgroundColor3 = Color3.new(1, 1, 1)
+	line.ZIndex = 999999
+	line.Parent = pivot
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = line
+
+	table.insert(lines, line)
+end
+
+-- Top
+createLine(0, UDim2.fromOffset(20, 20 - gap))
+
+-- Right
+createLine(90, UDim2.fromOffset(20 + gap, 20))
+
+-- Bottom
+createLine(180, UDim2.fromOffset(20, 20 + gap))
+
+-- Left
+createLine(270, UDim2.fromOffset(20 - gap, 20))
+
+--------------------------------------------------
+
+local hue = 0
+
+RunService.RenderStepped:Connect(function(dt)
+
+	-- Follow mouse
+	local mousePos = UserInputService:GetMouseLocation()
+	pivot.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
+
+	-- Spin
+	pivot.Rotation += spinSpeed * dt
+
+	-- Rainbow
+	hue = (hue + rainbowSpeed * dt) % 1
+	local colour = Color3.fromHSV(hue, 1, 1)
+
+	for _, line in ipairs(lines) do
+		line.BackgroundColor3 = colour
+	end
+
+end)
