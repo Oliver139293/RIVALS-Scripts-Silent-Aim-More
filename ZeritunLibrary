@@ -1,0 +1,492 @@
+local Library = {}
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+function Library:CreateWindow(config)
+
+	config = config or {}
+
+	local Window = {}
+
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "ModernUI"
+	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 999999
+	gui.Parent = CoreGui
+
+	local main = Instance.new("Frame")
+	main.Size = UDim2.new(0,320,0,380)
+	main.Position = UDim2.new(0.5,-160,0.5,-190)
+	main.BackgroundColor3 = Color3.fromRGB(18,18,18)
+	main.ClipsDescendants = true
+	main.Parent = gui
+
+	local glowColors = {
+		Color3.fromRGB(0,170,255),
+		Color3.fromRGB(0,170,255),
+		Color3.fromRGB(0,170,255)
+	}
+
+	for i = 1,3 do
+		local glow = Instance.new("Frame")
+		glow.Name = "Glow"..i
+
+		local expand = i * 4
+
+		glow.Position = UDim2.new(
+			main.Position.X.Scale,
+			main.Position.X.Offset - expand/2,
+			main.Position.Y.Scale,
+			main.Position.Y.Offset - expand/2
+		)
+
+		glow.Size = UDim2.new(
+			1,
+			expand,
+			1,
+			expand
+		)
+
+		glow.BackgroundTransparency = 1
+		glow.ZIndex = 0
+		glow.Parent = gui
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,12+i)
+		corner.Parent = glow
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = glowColors[i]
+		stroke.Thickness = i*2
+		stroke.Transparency = 0.65+(i*0.1)
+		stroke.Parent = glow
+
+		RunService.RenderStepped:Connect(function()
+			if glow and glow.Parent then
+				local expand = i*4
+
+				glow.Position = UDim2.new(
+					main.Position.X.Scale,
+					main.Position.X.Offset-expand/2,
+					main.Position.Y.Scale,
+					main.Position.Y.Offset-expand/2
+				)
+
+				glow.Size = UDim2.new(
+					main.Size.X.Scale,
+					main.Size.X.Offset+expand,
+					main.Size.Y.Scale,
+					main.Size.Y.Offset+expand
+				)
+			end
+		end)
+	end
+
+	local mainCorner = Instance.new("UICorner")
+	mainCorner.CornerRadius = UDim.new(0,12)
+	mainCorner.Parent = main
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(45,45,45)
+	stroke.Parent = main
+
+	local titleBar = Instance.new("Frame")
+	titleBar.Size = UDim2.new(1,0,0,55)
+	titleBar.BackgroundTransparency = 1
+	titleBar.Parent = main
+
+	local dragging = false
+	local dragStart
+	local startPos
+	local targetPosition
+
+	titleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = main.Position
+			targetPosition = main.Position
+		end
+	end)
+
+	titleBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+
+			local delta = input.Position - dragStart
+
+			targetPosition = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	RunService.RenderStepped:Connect(function()
+		if targetPosition then
+			main.Position = main.Position:Lerp(targetPosition,0.15)
+		end
+	end)
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1,-60,0,22)
+	title.Position = UDim2.new(0,12,0,8)
+	title.BackgroundTransparency = 1
+	title.Text = config.Title or "Modern UI"
+	title.TextColor3 = Color3.fromRGB(255,255,255)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 18
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = titleBar
+
+	local subtitle = Instance.new("TextLabel")
+	subtitle.Size = UDim2.new(1,-60,0,16)
+	subtitle.Position = UDim2.new(0,12,0,31)
+	subtitle.BackgroundTransparency = 1
+	subtitle.Text = config.Subtitle or ""
+	subtitle.TextColor3 = Color3.fromRGB(130,130,130)
+	subtitle.Font = Enum.Font.Gotham
+	subtitle.TextSize = 11
+	subtitle.TextXAlignment = Enum.TextXAlignment.Left
+	subtitle.Parent = titleBar
+
+	local minimize = Instance.new("TextButton")
+	minimize.Size = UDim2.new(0,28,0,28)
+	minimize.Position = UDim2.new(1,-40,0,14)
+	minimize.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	minimize.Text = "-"
+	minimize.TextColor3 = Color3.fromRGB(220,220,220)
+	minimize.Font = Enum.Font.GothamBold
+	minimize.TextSize = 16
+	minimize.Parent = titleBar
+
+	local minCorner = Instance.new("UICorner")
+	minCorner.CornerRadius = UDim.new(0,7)
+	minCorner.Parent = minimize
+
+	local divider = Instance.new("Frame")
+	divider.Size = UDim2.new(1,-24,0,1)
+	divider.Position = UDim2.new(0,12,0,55)
+	divider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	divider.Parent = main
+
+	local tabs = Instance.new("Frame")
+	tabs.Size = UDim2.new(1,-24,0,32)
+	tabs.Position = UDim2.new(0,12,0,62)
+	tabs.BackgroundTransparency = 1
+	tabs.Parent = main
+
+	local tabLayout = Instance.new("UIListLayout")
+	tabLayout.FillDirection = Enum.FillDirection.Horizontal
+	tabLayout.Padding = UDim.new(0,6)
+	tabLayout.Parent = tabs
+
+	Window.Main = main
+	Window.Tabs = tabs
+	Window.Pages = {}
+
+	local minimized = false
+
+	minimize.MouseButton1Click:Connect(function()
+		minimized = not minimized
+
+		minimize.Text = minimized and "+" or "-"
+
+		TweenService:Create(main,TweenInfo.new(.3,Enum.EasingStyle.Quart),{
+			Size = minimized and UDim2.new(0,320,0,55)
+			or UDim2.new(0,320,0,380)
+		}):Play()
+	end)
+
+    	local function CreatePage(name)
+
+		local page = Instance.new("ScrollingFrame")
+		page.Name = name.."Page"
+		page.Size = UDim2.new(1,-24,1,-110)
+		page.Position = UDim2.new(0,12,0,110)
+		page.BackgroundTransparency = 1
+		page.BorderSizePixel = 0
+		page.ScrollBarThickness = 3
+		page.ScrollBarImageColor3 = Color3.fromRGB(0,170,255)
+		page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		page.Visible = false
+		page.Parent = main
+
+		local padding = Instance.new("UIPadding")
+		padding.PaddingLeft = UDim.new(0,10)
+		padding.PaddingRight = UDim.new(0,10)
+		padding.Parent = page
+
+		local layout = Instance.new("UIListLayout")
+		layout.Padding = UDim.new(0,8)
+		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		layout.Parent = page
+
+		Window.Pages[name] = page
+
+		return page
+	end
+
+
+	local function CreateTabButton(name,page)
+
+		local button = Instance.new("TextButton")
+		button.Size = UDim2.new(0,85,1,0)
+		button.BackgroundColor3 = Color3.fromRGB(30,30,30)
+		button.Text = name
+		button.TextColor3 = Color3.fromRGB(200,200,200)
+		button.Font = Enum.Font.GothamMedium
+		button.TextSize = 12
+		button.Parent = tabs
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,8)
+		corner.Parent = button
+
+
+		button.MouseButton1Click:Connect(function()
+
+			for _,v in pairs(Window.Pages) do
+				v.Visible = false
+			end
+
+			page.Visible = true
+
+		end)
+	end
+
+
+	function Window:CreateTab(name)
+
+		local page = CreatePage(name)
+
+		CreateTabButton(name,page)
+
+		if #tabs:GetChildren() <= 2 then
+			page.Visible = true
+		end
+
+		return page
+	end
+
+    	function Window:CreateToggle(page,name,desc,callback)
+
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1,0,0,58)
+		card.BackgroundColor3 = Color3.fromRGB(28,28,28)
+		card.Parent = page
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,9)
+		corner.Parent = card
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(.7,0,0,20)
+		label.Position = UDim2.new(0,12,0,8)
+		label.BackgroundTransparency = 1
+		label.Text = name
+		label.TextColor3 = Color3.fromRGB(240,240,240)
+		label.Font = Enum.Font.GothamMedium
+		label.TextSize = 14
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = card
+
+		local descLabel = Instance.new("TextLabel")
+		descLabel.Size = UDim2.new(.75,0,0,15)
+		descLabel.Position = UDim2.new(0,12,0,32)
+		descLabel.BackgroundTransparency = 1
+		descLabel.Text = desc or ""
+		descLabel.TextColor3 = Color3.fromRGB(130,130,130)
+		descLabel.Font = Enum.Font.Gotham
+		descLabel.TextSize = 10
+		descLabel.TextXAlignment = Enum.TextXAlignment.Left
+		descLabel.Parent = card
+
+
+		local toggle = Instance.new("Frame")
+		toggle.Size = UDim2.new(0,40,0,20)
+		toggle.Position = UDim2.new(1,-52,.5,-10)
+		toggle.BackgroundColor3 = Color3.fromRGB(55,55,55)
+		toggle.Parent = card
+
+		local tc = Instance.new("UICorner")
+		tc.CornerRadius = UDim.new(1,0)
+		tc.Parent = toggle
+
+
+		local knob = Instance.new("Frame")
+		knob.Size = UDim2.new(0,16,0,16)
+		knob.Position = UDim2.new(0,2,.5,-8)
+		knob.BackgroundColor3 = Color3.fromRGB(230,230,230)
+		knob.Parent = toggle
+
+		local kc = Instance.new("UICorner")
+		kc.CornerRadius = UDim.new(1,0)
+		kc.Parent = knob
+
+
+		local state = false
+
+		toggle.InputBegan:Connect(function(input)
+
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+				state = not state
+
+				TweenService:Create(knob,TweenInfo.new(.2),{
+					Position = state and UDim2.new(1,-18,.5,-8)
+					or UDim2.new(0,2,.5,-8)
+				}):Play()
+
+				TweenService:Create(toggle,TweenInfo.new(.2),{
+					BackgroundColor3 = state
+					and Color3.fromRGB(0,170,255)
+					or Color3.fromRGB(55,55,55)
+				}):Play()
+
+				if callback then
+					callback(state)
+				end
+
+			end
+
+		end)
+
+	end
+
+
+
+	function Window:CreateSlider(page,name,desc,min,max,default,callback)
+
+		local card = Instance.new("Frame")
+		card.Size = UDim2.new(1,0,0,68)
+		card.BackgroundColor3 = Color3.fromRGB(28,28,28)
+		card.Parent = page
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,9)
+		corner.Parent = card
+
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.new(.8,0,0,20)
+		label.Position = UDim2.new(0,12,0,8)
+		label.BackgroundTransparency = 1
+		label.Text = name.." "..default
+		label.TextColor3 = Color3.fromRGB(240,240,240)
+		label.Font = Enum.Font.GothamMedium
+		label.TextSize = 14
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = card
+
+
+		local descLabel = Instance.new("TextLabel")
+		descLabel.Size = UDim2.new(.8,0,0,15)
+		descLabel.Position = UDim2.new(0,12,0,28)
+		descLabel.BackgroundTransparency = 1
+		descLabel.Text = desc or ""
+		descLabel.TextColor3 = Color3.fromRGB(130,130,130)
+		descLabel.Font = Enum.Font.Gotham
+		descLabel.TextSize = 10
+		descLabel.TextXAlignment = Enum.TextXAlignment.Left
+		descLabel.Parent = card
+
+
+		local bar = Instance.new("Frame")
+		bar.Size = UDim2.new(1,-24,0,5)
+		bar.Position = UDim2.new(0,12,0,54)
+		bar.BackgroundColor3 = Color3.fromRGB(55,55,55)
+		bar.Parent = card
+
+		local barCorner = Instance.new("UICorner")
+		barCorner.CornerRadius = UDim.new(1,0)
+		barCorner.Parent = bar
+
+
+		local percent = (default-min)/(max-min)
+
+		local fill = Instance.new("Frame")
+		fill.Size = UDim2.new(percent,0,1,0)
+		fill.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		fill.Parent = bar
+
+		local fillCorner = Instance.new("UICorner")
+		fillCorner.CornerRadius = UDim.new(1,0)
+		fillCorner.Parent = fill
+
+
+		local dragging = false
+
+
+		local function update(x)
+
+			local amount = math.clamp(
+				(x-bar.AbsolutePosition.X)/bar.AbsoluteSize.X,
+				0,
+				1
+			)
+
+			fill.Size = UDim2.new(amount,0,1,0)
+
+			local value = min+(max-min)*amount
+
+			if max > 1 then
+				value = math.floor(value)
+			else
+				value = math.floor(value*100)/100
+			end
+
+			label.Text = name.." "..value
+
+			if callback then
+				callback(value)
+			end
+		end
+
+
+		bar.InputBegan:Connect(function(input)
+
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging = true
+				update(input.Position.X)
+			end
+
+		end)
+
+
+		UserInputService.InputEnded:Connect(function(input)
+
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging = false
+			end
+
+		end)
+
+
+		UserInputService.InputChanged:Connect(function(input)
+
+			if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+				update(input.Position.X)
+			end
+
+		end)
+
+	end
+
+
+	return Window
+
+end
+
+
+return Library
