@@ -535,9 +535,8 @@ function Library:CreateWindow(config)
 	end
 
 
-	return Window
+return Window
 
 end
-
 
 return Library
