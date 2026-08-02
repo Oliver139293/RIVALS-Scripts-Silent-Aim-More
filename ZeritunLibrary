@@ -191,22 +191,28 @@ function Library:CreateWindow(config)
 	tabDivider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	tabDivider.Parent = main
 
-	local tabs = Instance.new("ScrollingFrame")
-	tabs.Size = UDim2.new(1,-24,0,32)
-	tabs.Position = UDim2.new(0,12,0,62)
-	tabs.BackgroundTransparency = 1
-	tabs.BorderSizePixel = 0
-	tabs.ScrollBarThickness = 2
-	tabs.ScrollBarImageColor3 = Color3.fromRGB(0,170,255)
-	tabs.ScrollingDirection = Enum.ScrollingDirection.X
-	tabs.CanvasSize = UDim2.new(0,0,0,0)
-	tabs.AutomaticCanvasSize = Enum.AutomaticSize.X
-	tabs.Parent = main
+	local tabs=Instance.new("ScrollingFrame")
+    tabs.Size=UDim2.new(1,-24,0,32)
+    tabs.Position=UDim2.new(0,12,0,62)
+    tabs.BackgroundTransparency=1
+    tabs.BorderSizePixel=0
+    tabs.ScrollBarThickness=0
+    tabs.ScrollingDirection=Enum.ScrollingDirection.X
+    tabs.AutomaticCanvasSize=Enum.AutomaticSize.X
+    tabs.CanvasSize=UDim2.new(0,0,0,0)
+    tabs.Parent=main
 
-	local tabLayout = Instance.new("UIListLayout")
-	tabLayout.FillDirection = Enum.FillDirection.Horizontal
-    tabLayout.Padding = UDim.new(0,4)
-	tabLayout.Parent = tabs
+    local tabPadding=Instance.new("UIPadding")
+    tabPadding.PaddingLeft=UDim.new(0,8)
+    tabPadding.PaddingRight=UDim.new(0,8)
+    tabPadding.PaddingTop=UDim.new(0,2)
+    tabPadding.Parent=tabs
+
+    local tabLayout=Instance.new("UIListLayout")
+    tabLayout.FillDirection=Enum.FillDirection.Horizontal
+    tabLayout.Padding=UDim.new(0,6)
+    tabLayout.SortOrder=Enum.SortOrder.LayoutOrder
+    tabLayout.Parent=tabs
 
 	Window.Main = main
 	Window.Tabs = tabs
@@ -240,38 +246,34 @@ function Library:CreateWindow(config)
 		page.Parent = main
 
 		local padding = Instance.new("UIPadding")
-		padding.PaddingLeft = UDim.new(0,10)
-		padding.PaddingRight = UDim.new(0,10)
-		padding.Parent = page
+        padding.PaddingLeft = UDim.new(0,10)
+        padding.PaddingRight = UDim.new(0,10)
+        padding.PaddingBottom = UDim.new(0,10)
+        padding.Parent = page
 
 		local layout = Instance.new("UIListLayout")
         layout.Padding = UDim.new(0,8)
         layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         layout.Parent = page
 
-
-        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	        page.CanvasSize = UDim2.new(
-		        0,
-		        0,
-		        0,
-		        layout.AbsoluteContentSize.Y + 10
-	        )
-        end)
-
 		Window.Pages[name] = page
 
 		return page
 	end
 
-
 	local function CreateTabButton(name,page)
 
-		local button = Instance.new("TextButton")
-		button.AutomaticSize = Enum.AutomaticSize.X
-        button.Size = UDim2.new(0,20,1,0)
-		button.BackgroundColor3 = Color3.fromRGB(30,30,30)
-		button.Text = name
+	    local divider = Instance.new("Frame")
+	    divider.Size = UDim2.new(0,1,0.7,0)
+	    divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
+	    divider.LayoutOrder = 0
+	    divider.Parent = tabs
+
+	    local button = Instance.new("TextButton")
+	    button.AutomaticSize = Enum.AutomaticSize.X
+	    button.Size = UDim2.new(0,65,1,0)
+	    button.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	    button.Text = name
 		button.TextColor3 = Color3.fromRGB(200,200,200)
 		button.Font = Enum.Font.GothamMedium
 		button.TextSize = 12
