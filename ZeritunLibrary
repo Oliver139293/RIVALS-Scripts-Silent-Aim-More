@@ -144,7 +144,7 @@ function Library:CreateWindow(config)
 
 	table.insert(Connections, RunService.RenderStepped:Connect(function()
 		if targetPosition then
-			main.Position = main.Position:Lerp(targetPosition,0.15)
+			main.Position = main.Position:Lerp(targetPosition,0.05)
 		end
 	end))
 
