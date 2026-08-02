@@ -188,7 +188,7 @@ function Library:CreateWindow(config)
 
 	local tabLayout = Instance.new("UIListLayout")
 	tabLayout.FillDirection = Enum.FillDirection.Horizontal
-	tabLayout.Padding = UDim.new(0,4)
+	tabLayout.Padding = UDim.new(0,7)
 	tabLayout.Parent = tabs
 
 	Window.Main = main
