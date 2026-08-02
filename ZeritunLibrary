@@ -132,9 +132,14 @@ function Library:CreateWindow(config)
 		end
 	end)
 
+	local dragSmoothness = 0.05 -- lower = more delay, higher = faster
+
 	RunService.RenderStepped:Connect(function()
 		if targetPosition then
-			main.Position = main.Position:Lerp(targetPosition,0.15)
+			main.Position = main.Position:Lerp(
+				targetPosition,
+				dragSmoothness
+			)
 		end
 	end)
 
@@ -179,6 +184,12 @@ function Library:CreateWindow(config)
 	divider.Position = UDim2.new(0,12,0,55)
 	divider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	divider.Parent = main
+
+	local tabDivider = Instance.new("Frame")
+	tabDivider.Size = UDim2.new(1,-24,0,1)
+	tabDivider.Position = UDim2.new(0,12,0,98)
+	tabDivider.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	tabDivider.Parent = main
 
 	local tabs = Instance.new("Frame")
 	tabs.Size = UDim2.new(1,-24,0,32)
@@ -252,6 +263,18 @@ function Library:CreateWindow(config)
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0,8)
 		corner.Parent = button
+
+		button.MouseEnter:Connect(function()
+			TweenService:Create(button,TweenInfo.new(.15),{
+				BackgroundColor3 = Color3.fromRGB(45,45,45)
+			}):Play()
+		end)
+
+		button.MouseLeave:Connect(function()
+			TweenService:Create(button,TweenInfo.new(.15),{
+				BackgroundColor3 = Color3.fromRGB(30,30,30)
+			}):Play()
+		end)
 
 
 		button.MouseButton1Click:Connect(function()
