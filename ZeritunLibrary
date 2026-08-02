@@ -293,17 +293,21 @@ function Library:CreateWindow(config)
         divider.Parent = holder
 
 
-    	button.MouseEnter:Connect(function()
-    		TweenService:Create(button,TweenInfo.new(.15),{
-    			BackgroundColor3 = Color3.fromRGB(45,45,45)
-    		}):Play()
-    	end)
+    	button.InputBegan:Connect(function(input)
+	        if input.UserInputType == Enum.UserInputType.MouseMovement then
+		        TweenService:Create(button,TweenInfo.new(.15),{
+		        	BackgroundColor3 = Color3.fromRGB(45,45,45)
+		        }):Play()
+	        end
+        end)
 
-    	button.MouseLeave:Connect(function()
-	    	TweenService:Create(button,TweenInfo.new(.15),{
-    			BackgroundColor3 = Color3.fromRGB(30,30,30)
-	    	}):Play()
-	    end)
+        button.InputEnded:Connect(function(input)
+        	if input.UserInputType == Enum.UserInputType.MouseMovement then
+	        	TweenService:Create(button,TweenInfo.new(.15),{
+	        		BackgroundColor3 = Color3.fromRGB(30,30,30)
+	        	}):Play()
+	        end
+        end)
 
 
 	    button.MouseButton1Click:Connect(function()
