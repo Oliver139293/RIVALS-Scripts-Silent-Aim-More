@@ -566,6 +566,34 @@ function Library:CreateWindow(config)
 
 	end
 
+	function Window:CreateSection(page,name)
+
+		local section = Instance.new("Frame")
+		section.Size = UDim2.new(1,0,0,32)
+		section.BackgroundTransparency = 1
+		section.Parent = page
+
+		local title = Instance.new("TextLabel")
+		title.Size = UDim2.new(1,0,0,18)
+		title.Position = UDim2.new(0,0,0,2)
+		title.BackgroundTransparency = 1
+		title.Text = name
+		title.TextColor3 = Color3.fromRGB(0,170,255)
+		title.Font = Enum.Font.GothamBold
+		title.TextSize = 13
+		title.TextXAlignment = Enum.TextXAlignment.Left
+		title.Parent = section
+
+
+		local line = Instance.new("Frame")
+		line.Size = UDim2.new(1,0,0,1)
+		line.Position = UDim2.new(0,0,0,25)
+		line.BackgroundColor3 = Color3.fromRGB(50,50,50)
+		line.BorderSizePixel = 0
+		line.Parent = section
+
+	end
+
 
 return Window
 
