@@ -271,6 +271,7 @@ function Library:CreateWindow(config)
     	button.TextColor3 = Color3.fromRGB(200,200,200)
     	button.Font = Enum.Font.GothamMedium
     	button.TextSize = 12
+		button.ZIndex = 2
     	button.Parent = holder
 
 
@@ -290,6 +291,8 @@ function Library:CreateWindow(config)
         divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
         divider.BorderSizePixel = 0
         divider.LayoutOrder = 2
+		divider.Active = false
+		divider.ZIndex = 0
         divider.Parent = holder
 
 
