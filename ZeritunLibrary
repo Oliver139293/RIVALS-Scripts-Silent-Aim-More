@@ -257,8 +257,8 @@ function Library:CreateWindow(config)
 	    holder.Parent = tabs
 
 		local tabPadding = Instance.new("UIPadding")
-		tabPadding.PaddingLeft = UDim.new(0,8)
-		tabPadding.PaddingRight = UDim.new(0,8)
+		tabPadding.PaddingLeft = UDim.new(0,12)
+		tabPadding.PaddingRight = UDim.new(0,12)
 		tabPadding.Parent = tabs
 
 		local bottomTabDivider = Instance.new("Frame")
