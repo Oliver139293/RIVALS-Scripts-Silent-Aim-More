@@ -259,7 +259,7 @@ function Library:CreateWindow(config)
     	local holderLayout = Instance.new("UIListLayout")
     	holderLayout.FillDirection = Enum.FillDirection.Horizontal
     	holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    	holderLayout.Padding = UDim.new(0,10)
+    	holderLayout.Padding = UDim.new(0,12)
 	    holderLayout.Parent = holder
 
 
@@ -286,11 +286,11 @@ function Library:CreateWindow(config)
 
 
     	local divider = Instance.new("Frame")
-		divider.Size = UDim2.new(0,1,0.55,0)
-		divider.Position = UDim2.new(1,5,0.225,0)
-		divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
-		divider.BorderSizePixel = 0
-		divider.Parent = holder
+        divider.Size = UDim2.new(0,1,0.6,0)
+        divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
+        divider.BorderSizePixel = 0
+        divider.LayoutOrder = 2
+        divider.Parent = holder
 
 
     	button.MouseEnter:Connect(function()
