@@ -286,6 +286,13 @@ function Library:CreateWindow(config)
     	corner.Parent = button
 
 
+		local buttonStroke = Instance.new("UIStroke")
+		buttonStroke.Color = Color3.fromRGB(0,170,255)
+		buttonStroke.Thickness = 2
+		buttonStroke.Transparency = 1
+		buttonStroke.Parent = button
+
+
     	local divider = Instance.new("Frame")
         divider.Size = UDim2.new(0,1,0.6,0)
         divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
@@ -296,21 +303,21 @@ function Library:CreateWindow(config)
         divider.Parent = holder
 
 
-    	button.InputBegan:Connect(function(input)
-	        if input.UserInputType == Enum.UserInputType.MouseMovement then
-		        TweenService:Create(button,TweenInfo.new(.15),{
-		        	BackgroundColor3 = Color3.fromRGB(45,45,45)
-		        }):Play()
-	        end
-        end)
+		button.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				TweenService:Create(buttonStroke,TweenInfo.new(.15),{
+					Transparency = 0
+				}):Play()
+			end
+		end)
 
-        button.InputEnded:Connect(function(input)
-        	if input.UserInputType == Enum.UserInputType.MouseMovement then
-	        	TweenService:Create(button,TweenInfo.new(.15),{
-	        		BackgroundColor3 = Color3.fromRGB(30,30,30)
-	        	}):Play()
-	        end
-        end)
+		button.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseMovement then
+				TweenService:Create(buttonStroke,TweenInfo.new(.15),{
+					Transparency = 1
+				}):Play()
+			end
+		end)
 
 
 	    button.MouseButton1Click:Connect(function()
