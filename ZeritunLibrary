@@ -271,7 +271,7 @@ function Library:CreateWindow(config)
     	local holderLayout = Instance.new("UIListLayout")
     	holderLayout.FillDirection = Enum.FillDirection.Horizontal
     	holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    	holderLayout.Padding = UDim.new(0,8)
+    	holderLayout.Padding = UDim.new(0,4)
 	    holderLayout.Parent = holder
 
 
@@ -305,13 +305,6 @@ function Library:CreateWindow(config)
 		buttonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		buttonStroke.LineJoinMode = Enum.LineJoinMode.Round
 		buttonStroke.Parent = button
-
-
-		local spacer = Instance.new("Frame")
-		spacer.Size = UDim2.new(0,8,1,0)
-		spacer.BackgroundTransparency = 1
-		spacer.LayoutOrder = 1
-		spacer.Parent = holder
 
 
     	local divider = Instance.new("Frame")
