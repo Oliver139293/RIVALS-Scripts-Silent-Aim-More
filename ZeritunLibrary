@@ -132,14 +132,9 @@ function Library:CreateWindow(config)
 		end
 	end)
 
-	local dragSmoothness = 0.05 -- lower = more delay, higher = faster
-
 	RunService.RenderStepped:Connect(function()
 		if targetPosition then
-			main.Position = main.Position:Lerp(
-				targetPosition,
-				dragSmoothness
-			)
+			main.Position = main.Position:Lerp(targetPosition,0.15)
 		end
 	end)
 
@@ -185,34 +180,16 @@ function Library:CreateWindow(config)
 	divider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	divider.Parent = main
 
-	local tabDivider = Instance.new("Frame")
-	tabDivider.Size = UDim2.new(1,-24,0,1)
-	tabDivider.Position = UDim2.new(0,12,0,98)
-	tabDivider.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	tabDivider.Parent = main
+	local tabs = Instance.new("Frame")
+	tabs.Size = UDim2.new(1,-24,0,32)
+	tabs.Position = UDim2.new(0,12,0,62)
+	tabs.BackgroundTransparency = 1
+	tabs.Parent = main
 
-	local tabs=Instance.new("ScrollingFrame")
-    tabs.Size=UDim2.new(1,-24,0,32)
-    tabs.Position=UDim2.new(0,12,0,62)
-    tabs.BackgroundTransparency=1
-    tabs.BorderSizePixel=0
-    tabs.ScrollBarThickness=0
-    tabs.ScrollingDirection=Enum.ScrollingDirection.X
-    tabs.AutomaticCanvasSize=Enum.AutomaticSize.X
-    tabs.CanvasSize=UDim2.new(0,0,0,0)
-    tabs.Parent=main
-
-    local tabPadding=Instance.new("UIPadding")
-    tabPadding.PaddingLeft=UDim.new(0,8)
-    tabPadding.PaddingRight=UDim.new(0,8)
-    tabPadding.PaddingTop=UDim.new(0,2)
-    tabPadding.Parent=tabs
-
-    local tabLayout=Instance.new("UIListLayout")
-    tabLayout.FillDirection=Enum.FillDirection.Horizontal
-    tabLayout.Padding=UDim.new(0,6)
-    tabLayout.SortOrder=Enum.SortOrder.LayoutOrder
-    tabLayout.Parent=tabs
+	local tabLayout = Instance.new("UIListLayout")
+	tabLayout.FillDirection = Enum.FillDirection.Horizontal
+	tabLayout.Padding = UDim.new(0,6)
+	tabLayout.Parent = tabs
 
 	Window.Main = main
 	Window.Tabs = tabs
@@ -246,68 +223,89 @@ function Library:CreateWindow(config)
 		page.Parent = main
 
 		local padding = Instance.new("UIPadding")
-        padding.PaddingLeft = UDim.new(0,10)
-        padding.PaddingRight = UDim.new(0,10)
-        padding.PaddingBottom = UDim.new(0,10)
-        padding.Parent = page
+		padding.PaddingLeft = UDim.new(0,10)
+		padding.PaddingRight = UDim.new(0,10)
+		padding.Parent = page
 
 		local layout = Instance.new("UIListLayout")
-        layout.Padding = UDim.new(0,8)
-        layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        layout.Parent = page
+		layout.Padding = UDim.new(0,8)
+		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		layout.Parent = page
 
 		Window.Pages[name] = page
 
 		return page
 	end
 
+
 	local function CreateTabButton(name,page)
 
-	    local button = Instance.new("TextButton")
-	    button.AutomaticSize = Enum.AutomaticSize.X
-	    button.Size = UDim2.new(0,0,1,0)
-        button.AutomaticSize = Enum.AutomaticSize.X
-	    button.BackgroundColor3 = Color3.fromRGB(30,30,30)
-	    button.Text = name
-		button.TextColor3 = Color3.fromRGB(200,200,200)
-		button.Font = Enum.Font.GothamMedium
-		button.TextSize = 12
-		button.Parent = tabs
+	    local holder = Instance.new("Frame")
+	    holder.Size = UDim2.new(0,0,1,0)
+	    holder.AutomaticSize = Enum.AutomaticSize.X
+	    holder.BackgroundTransparency = 1
+	    holder.Parent = tabs
 
-        local divider = Instance.new("Frame")
-        divider.Size = UDim2.new(0,1,0.7,0)
-        divider.Position = UDim2.new(1,5,0.15,0)
-        divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
-        divider.BorderSizePixel = 0
-        divider.Parent = button
-
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0,8)
-		corner.Parent = button
-
-		button.MouseEnter:Connect(function()
-			TweenService:Create(button,TweenInfo.new(.15),{
-				BackgroundColor3 = Color3.fromRGB(45,45,45)
-			}):Play()
-		end)
-
-		button.MouseLeave:Connect(function()
-			TweenService:Create(button,TweenInfo.new(.15),{
-				BackgroundColor3 = Color3.fromRGB(30,30,30)
-			}):Play()
-		end)
+    	local holderLayout = Instance.new("UIListLayout")
+    	holderLayout.FillDirection = Enum.FillDirection.Horizontal
+    	holderLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    	holderLayout.Padding = UDim.new(0,10)
+	    holderLayout.Parent = holder
 
 
-		button.MouseButton1Click:Connect(function()
+    	local button = Instance.new("TextButton")
+    	button.Size = UDim2.new(0,0,1,0)
+    	button.AutomaticSize = Enum.AutomaticSize.X
+    	button.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    	button.Text = name
+    	button.TextColor3 = Color3.fromRGB(200,200,200)
+    	button.Font = Enum.Font.GothamMedium
+    	button.TextSize = 12
+    	button.Parent = holder
 
-			for _,v in pairs(Window.Pages) do
-				v.Visible = false
-			end
 
-			page.Visible = true
+    	local buttonPadding = Instance.new("UIPadding")
+      	buttonPadding.PaddingLeft = UDim.new(0,12)
+    	buttonPadding.PaddingRight = UDim.new(0,12)
+    	buttonPadding.Parent = button
 
-		end)
-	end
+
+    	local corner = Instance.new("UICorner")
+    	corner.CornerRadius = UDim.new(0,8)
+    	corner.Parent = button
+
+
+    	local divider = Instance.new("Frame")
+    	divider.Size = UDim2.new(0,1,0.6,0)
+    	divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    	divider.BorderSizePixel = 0
+    	divider.Parent = holder
+
+
+    	button.MouseEnter:Connect(function()
+    		TweenService:Create(button,TweenInfo.new(.15),{
+    			BackgroundColor3 = Color3.fromRGB(45,45,45)
+    		}):Play()
+    	end)
+
+    	button.MouseLeave:Connect(function()
+	    	TweenService:Create(button,TweenInfo.new(.15),{
+    			BackgroundColor3 = Color3.fromRGB(30,30,30)
+	    	}):Play()
+	    end)
+
+
+	    button.MouseButton1Click:Connect(function()
+
+		    for _,v in pairs(Window.Pages) do
+		    	v.Visible = false
+		    end
+
+		    page.Visible = true
+
+	    end)
+
+    end
 
 
 	function Window:CreateTab(name)
@@ -527,37 +525,10 @@ function Library:CreateWindow(config)
 
 	end
 
-	function Window:CreateSection(page,name)
 
-		local section = Instance.new("Frame")
-		section.Size = UDim2.new(1,0,0,32)
-		section.BackgroundTransparency = 1
-		section.Parent = page
-
-
-		local title = Instance.new("TextLabel")
-		title.Size = UDim2.new(1,0,0,20)
-		title.Position = UDim2.new(0,0,0,4)
-		title.BackgroundTransparency = 1
-		title.Text = name
-		title.TextColor3 = Color3.fromRGB(0,170,255)
-		title.Font = Enum.Font.GothamBold
-		title.TextSize = 13
-		title.TextXAlignment = Enum.TextXAlignment.Left
-		title.Parent = section
-
-
-		local line = Instance.new("Frame")
-		line.Size = UDim2.new(1,0,0,1)
-		line.Position = UDim2.new(0,0,0,26)
-		line.BackgroundColor3 = Color3.fromRGB(50,50,50)
-		line.Parent = section
-
-	end
-
-
-return Window
+	return Window
 
 end
+
 
 return Library
