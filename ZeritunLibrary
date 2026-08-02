@@ -263,21 +263,23 @@ function Library:CreateWindow(config)
 
 	local function CreateTabButton(name,page)
 
-	    local divider = Instance.new("Frame")
-	    divider.Size = UDim2.new(0,1,0.7,0)
-	    divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
-	    divider.LayoutOrder = 0
-	    divider.Parent = tabs
-
 	    local button = Instance.new("TextButton")
 	    button.AutomaticSize = Enum.AutomaticSize.X
-	    button.Size = UDim2.new(0,65,1,0)
+	    button.Size = UDim2.new(0,0,1,0)
+        button.AutomaticSize = Enum.AutomaticSize.X
 	    button.BackgroundColor3 = Color3.fromRGB(30,30,30)
 	    button.Text = name
 		button.TextColor3 = Color3.fromRGB(200,200,200)
 		button.Font = Enum.Font.GothamMedium
 		button.TextSize = 12
 		button.Parent = tabs
+
+        local divider = Instance.new("Frame")
+        divider.Size = UDim2.new(0,1,0.7,0)
+        divider.Position = UDim2.new(1,5,0.15,0)
+        divider.BackgroundColor3 = Color3.fromRGB(60,60,60)
+        divider.BorderSizePixel = 0
+        divider.Parent = button
 
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0,8)
