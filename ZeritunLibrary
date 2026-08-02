@@ -191,15 +191,21 @@ function Library:CreateWindow(config)
 	tabDivider.BackgroundColor3 = Color3.fromRGB(50,50,50)
 	tabDivider.Parent = main
 
-	local tabs = Instance.new("Frame")
+	local tabs = Instance.new("ScrollingFrame")
 	tabs.Size = UDim2.new(1,-24,0,32)
 	tabs.Position = UDim2.new(0,12,0,62)
 	tabs.BackgroundTransparency = 1
+	tabs.BorderSizePixel = 0
+	tabs.ScrollBarThickness = 2
+	tabs.ScrollBarImageColor3 = Color3.fromRGB(0,170,255)
+	tabs.ScrollingDirection = Enum.ScrollingDirection.X
+	tabs.CanvasSize = UDim2.new(0,0,0,0)
+	tabs.AutomaticCanvasSize = Enum.AutomaticSize.X
 	tabs.Parent = main
 
 	local tabLayout = Instance.new("UIListLayout")
 	tabLayout.FillDirection = Enum.FillDirection.Horizontal
-	tabLayout.Padding = UDim.new(0,6)
+    tabLayout.Padding = UDim.new(0,4)
 	tabLayout.Parent = tabs
 
 	Window.Main = main
@@ -239,9 +245,19 @@ function Library:CreateWindow(config)
 		padding.Parent = page
 
 		local layout = Instance.new("UIListLayout")
-		layout.Padding = UDim.new(0,8)
-		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-		layout.Parent = page
+        layout.Padding = UDim.new(0,8)
+        layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        layout.Parent = page
+
+
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	        page.CanvasSize = UDim2.new(
+		        0,
+		        0,
+		        0,
+		        layout.AbsoluteContentSize.Y + 10
+	        )
+        end)
 
 		Window.Pages[name] = page
 
@@ -252,7 +268,8 @@ function Library:CreateWindow(config)
 	local function CreateTabButton(name,page)
 
 		local button = Instance.new("TextButton")
-		button.Size = UDim2.new(0,85,1,0)
+		button.AutomaticSize = Enum.AutomaticSize.X
+        button.Size = UDim2.new(0,20,1,0)
 		button.BackgroundColor3 = Color3.fromRGB(30,30,30)
 		button.Text = name
 		button.TextColor3 = Color3.fromRGB(200,200,200)
