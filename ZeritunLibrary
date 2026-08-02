@@ -4,12 +4,22 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
-
 function Library:CreateWindow(config)
 
 	config = config or {}
 
 	local Window = {}
+    local Connections = {}
+
+    for _,connection in pairs(Connections) do
+	    connection:Disconnect()
+    end
+
+	-- Remove old GUI if it already exists
+	local oldGui = CoreGui:FindFirstChild("ModernUI")
+	if oldGui then
+		oldGui:Destroy()
+	end
 
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "ModernUI"
@@ -64,7 +74,7 @@ function Library:CreateWindow(config)
 		stroke.Transparency = 0.65+(i*0.1)
 		stroke.Parent = glow
 
-		RunService.RenderStepped:Connect(function()
+		table.insert(Connections, RunService.RenderStepped:Connect(function()
 			if glow and glow.Parent then
 				local expand = i*4
 
@@ -82,7 +92,7 @@ function Library:CreateWindow(config)
 					main.Size.Y.Offset+expand
 				)
 			end
-		end)
+		end))
 	end
 
 	local mainCorner = Instance.new("UICorner")
@@ -132,11 +142,11 @@ function Library:CreateWindow(config)
 		end
 	end)
 
-	RunService.RenderStepped:Connect(function()
+	table.insert(Connections, RunService.RenderStepped:Connect(function()
 		if targetPosition then
 			main.Position = main.Position:Lerp(targetPosition,0.15)
 		end
-	end)
+	end))
 
 	local title = Instance.new("TextLabel")
 	title.Size = UDim2.new(1,-60,0,22)
@@ -188,7 +198,7 @@ function Library:CreateWindow(config)
 
 	local tabLayout = Instance.new("UIListLayout")
 	tabLayout.FillDirection = Enum.FillDirection.Horizontal
-	tabLayout.Padding = UDim.new(0,7)
+	tabLayout.Padding = UDim.new(0,6)
 	tabLayout.Parent = tabs
 
 	Window.Main = main
