@@ -1,0 +1,337 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "[FPS] Recoil | Ragebot + ESP",
+    LoadingTitle = "Random ahh Recoil script",
+    LoadingSubtitle = "by FluffyWuffy",
+    ConfigurationSaving = {
+        Enabled = false
+    }
+})
+
+local MainTab = Window:CreateTab("Hitbox", 4483362458)
+
+local Settings = {
+    PlayerESP = false,
+    BotESP = false,
+    PlayerTracers = false,
+    BotTracers = false,
+}
+
+local BotNames = {
+    Astration = true,
+    Bogobobogobobg = true,
+    BogolessHatJoe = true,
+    DarkYellowGuest = true,
+    QuickBooms = true,
+    n6vd = true,
+}
+
+local PlayerTracers = {}
+local BotTracers = {}
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local function SetupPlayerESP(player)
+    if player == LocalPlayer then
+        return
+    end
+
+    local function ApplyESP(character)
+        if Settings.PlayerESP then
+            local highlight = character:FindFirstChild("PlayerESP")
+
+            if not highlight then
+                highlight = Instance.new("Highlight")
+                highlight.Name = "PlayerESP"
+                highlight.Adornee = character
+                highlight.FillColor = Color3.fromRGB(255,0,0)
+                highlight.OutlineColor = Color3.new(1,1,1)
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = character
+            end
+        end
+    end
+
+    if player.Character then
+        ApplyESP(player.Character)
+    end
+
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("HumanoidRootPart")
+        task.wait(0.2)
+        ApplyESP(character)
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    SetupPlayerESP(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    SetupPlayerESP(player)
+end)
+
+local function UpdateBotESP()
+    for _, bot in ipairs(workspace:GetChildren()) do
+        if bot:IsA("Model")
+        and BotNames[bot.Name] then
+
+            local highlight = bot:FindFirstChild("BotESP")
+
+            if Settings.BotESP then
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "BotESP"
+                    highlight.Adornee = bot
+                    highlight.FillColor = Color3.fromRGB(255, 255, 0)
+                    highlight.OutlineColor = Color3.new(1, 1, 1)
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.Parent = bot
+                end
+            elseif highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+end
+
+local function UpdatePlayerTracers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == LocalPlayer then
+            continue
+        end
+
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+
+        if not root then
+            if PlayerTracers[player] then
+                PlayerTracers[player]:Remove()
+                PlayerTracers[player] = nil
+            end
+            continue
+        end
+
+        if not PlayerTracers[player] then
+            local line = Drawing.new("Line")
+            line.Thickness = 1
+            line.Color = Color3.fromRGB(255, 0, 0)
+            PlayerTracers[player] = line
+        end
+
+        local line = PlayerTracers[player]
+
+        if Settings.PlayerTracers then
+            local pos, visible = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
+
+            if visible then
+                line.Visible = true
+                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                line.To = Vector2.new(pos.X, pos.Y)
+            else
+                line.Visible = false
+            end
+        else
+            line.Visible = false
+        end
+    end
+end
+
+local function UpdateBotTracers()
+    local ActiveBots = {}
+
+    for _, bot in ipairs(workspace:GetChildren()) do
+        if bot:IsA("Model") and BotNames[bot.Name] then
+            ActiveBots[bot] = true
+
+            local root = bot:FindFirstChild("HumanoidRootPart")
+
+            if root then
+                if not BotTracers[bot] then
+                    local line = Drawing.new("Line")
+                    line.Thickness = 1
+                    line.Color = Color3.fromRGB(255,255,0)
+                    line.Visible = false
+                    BotTracers[bot] = line
+                end
+
+                local line = BotTracers[bot]
+
+                if Settings.BotTracers then
+                    local pos, visible = Camera:WorldToViewportPoint(root.Position)
+
+                    if visible then
+                        line.Visible = true
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(pos.X, pos.Y)
+                    else
+                        line.Visible = false
+                    end
+                else
+                    line.Visible = false
+                end
+            end
+        end
+    end
+
+    -- Remove tracers for deleted bots
+    for bot, line in pairs(BotTracers) do
+        if not ActiveBots[bot] then
+            line:Remove()
+            BotTracers[bot] = nil
+        end
+    end
+end
+
+-- Global State System
+_G.HitboxActive = false
+_G.HitboxSize = 10000
+_G.TeamCheck = false
+_G.BotCheck = false
+
+-- RUNTIME REPLICATION CALIBRATION MOTOR INTERACTION LOOP
+task.spawn(function()
+    while task.wait() do
+        local localChar = LocalPlayer.Character
+        local hrp = localChar and localChar:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+        
+        -- Process Real Online Opponents Loop
+        if _G.HitboxActive then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player == LocalPlayer or not player.Character then continue end
+                
+                -- Anti-Team Check
+                if _G.TeamCheck and player.Team == LocalPlayer.Team and player.Team ~= nil then
+                    local hitboxFolder = player.Character:FindFirstChild("Hitbox")
+                    local head = hitboxFolder and hitboxFolder:FindFirstChild("Hitbox_Head")
+                    if head and head.Size ~= Vector3.new(2,1,1) then 
+                        head.Size = Vector3.new(2,1,1) 
+                    end
+                    continue
+                end
+                
+                local hitboxFolder = player.Character:FindFirstChild("Hitbox")
+                local head = hitboxFolder and hitboxFolder:FindFirstChild("Hitbox_Head")
+                if head and head:IsA("BasePart") then
+                    local dist = (head.Position - hrp.Position).Magnitude
+                    local dynamicScale = math.clamp((dist - 5) * 2, 1, _G.HitboxSize)
+                    local targetMatrixSize = Vector3.new(dynamicScale, dynamicScale, dynamicScale)
+                    if head.Size ~= targetMatrixSize then
+                        head.Size = targetMatrixSize
+                        head.CanCollide = false
+                        head.Massless = true
+                    end
+                end
+            end
+        end
+        
+        -- Process AI Bots Loop
+        if _G.HitboxActive and _G.BotCheck then
+            for _, bot in ipairs(Workspace:GetChildren()) do
+                if bot:IsA("Model") and bot.Name ~= "Map" and bot ~= localChar and not Players:GetPlayerFromCharacter(bot) then
+                    local hitboxFolder = bot:FindFirstChild("Hitbox")
+                    local head = hitboxFolder and hitboxFolder:FindFirstChild("Hitbox_Head")
+                    if head and head:IsA("BasePart") then
+                        local dist = (head.Position - hrp.Position).Magnitude
+                        local dynamicScale = math.clamp((dist - 3) * 2, 1, _G.HitboxSize)
+                        local targetMatrixSize = Vector3.new(dynamicScale, dynamicScale, dynamicScale)
+                        if head.Size ~= targetMatrixSize then
+                            head.Size = targetMatrixSize
+                            head.CanCollide = false
+                            head.Massless = true
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    UpdateBotESP()
+    UpdatePlayerTracers()
+    UpdateBotTracers()
+end)
+
+MainTab:CreateToggle({
+    Name = "Ragebot",
+    CurrentValue = false,
+    Flag = "MasterHitbox",
+    Callback = function(Value)
+        _G.HitboxActive = Value
+        _G.TeamCheck = Value
+        _G.BotCheck = Value
+    end
+})
+
+local ESPSection = MainTab:CreateSection("ESP")
+
+MainTab:CreateToggle({
+    Name = "Player ESP",
+    CurrentValue = false,
+    Flag = "PlayerESP",
+    Callback = function(Value)
+        Settings.PlayerESP = Value
+
+        if Value then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character then
+                    SetupPlayerESP(player)
+                end
+            end
+        else
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Character then
+                    local esp = player.Character:FindFirstChild("PlayerESP")
+                    if esp then
+                        esp:Destroy()
+                    end
+                end
+            end
+        end
+    end
+})
+
+MainTab:CreateToggle({
+    Name = "Bot ESP",
+    CurrentValue = false,
+    Flag = "BotESP",
+    Callback = function(Value)
+        Settings.BotESP = Value
+    end
+})
+
+MainTab:CreateToggle({
+    Name = "Player Tracers",
+    CurrentValue = false,
+    Flag = "PlayerTracers",
+    Callback = function(Value)
+        Settings.PlayerTracers = Value
+    end
+})
+
+MainTab:CreateToggle({
+    Name = "Bot Tracers",
+    CurrentValue = false,
+    Flag = "BotTracers",
+    Callback = function(Value)
+        Settings.BotTracers = Value
+
+        if not Value then
+            for _, line in pairs(BotTracers) do
+                line:Remove()
+            end
+
+            BotTracers = {}
+        end
+    end
+})
