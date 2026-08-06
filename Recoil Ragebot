@@ -104,46 +104,63 @@ local function UpdateBotESP()
 end
 
 local function UpdatePlayerTracers()
+    local ActivePlayers = {}
+
     for _, player in ipairs(Players:GetPlayers()) do
-        if player == LocalPlayer then
-            continue
-        end
+        if player ~= LocalPlayer then
+            ActivePlayers[player] = true
 
-        local character = player.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
+            local character = player.Character
+            local root = character and character:FindFirstChild("HumanoidRootPart")
 
-        if not root then
-            if PlayerTracers[player] then
+            if root then
+
+                if not PlayerTracers[player] then
+                    local line = Drawing.new("Line")
+                    line.Thickness = 1
+                    line.Color = Color3.fromRGB(255, 0, 0)
+                    line.Visible = false
+                    PlayerTracers[player] = line
+                end
+
+                local line = PlayerTracers[player]
+
+                if Settings.PlayerTracers then
+                    local pos, visible = Camera:WorldToViewportPoint(root.Position)
+
+                    if visible then
+                        line.Visible = true
+                        line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                        line.To = Vector2.new(pos.X, pos.Y)
+                    else
+                        line.Visible = false
+                    end
+                else
+                    line.Visible = false
+                end
+
+            elseif PlayerTracers[player] then
                 PlayerTracers[player]:Remove()
                 PlayerTracers[player] = nil
             end
-            continue
         end
+    end
 
-        if not PlayerTracers[player] then
-            local line = Drawing.new("Line")
-            line.Thickness = 1
-            line.Color = Color3.fromRGB(255, 0, 0)
-            PlayerTracers[player] = line
-        end
-
-        local line = PlayerTracers[player]
-
-        if Settings.PlayerTracers then
-            local pos, visible = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
-
-            if visible then
-                line.Visible = true
-                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                line.To = Vector2.new(pos.X, pos.Y)
-            else
-                line.Visible = false
-            end
-        else
-            line.Visible = false
+    -- Remove tracers from players who left
+    for player, line in pairs(PlayerTracers) do
+        if not ActivePlayers[player] then
+            line:Remove()
+            PlayerTracers[player] = nil
         end
     end
 end
+
+Players.PlayerRemoving:Connect(function(player)
+    if PlayerTracers[player] then
+        PlayerTracers[player]:Remove()
+        PlayerTracers[player] = nil
+    end
+end)
 
 local function UpdateBotTracers()
     local ActiveBots = {}
